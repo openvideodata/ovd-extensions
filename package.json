@@ -4,13 +4,13 @@
 		"build": "webpack --mode=production",
 		"lint": "run-p lint:*",
 		"lint-fix": "run-p 'lint:* -- --fix'",
-		"lint:css": "stylelint source/**/*.css",
+		"lint:css": "stylelint src/**/*.css",
 		"lint:js": "xo",
 		"release": "VER=$(daily-version) run-s build version release:*",
-		"release:amo": "web-ext-submit --source-dir distribution",
-		"release:cws": "webstore upload --source=distribution --auto-publish",
+		"release:amo": "web-ext-submit --source-dir dist",
+		"release:cws": "webstore upload --source=dist --auto-publish",
 		"test": "run-s lint:* build",
-		"version": "dot-json distribution/manifest.json version $VER",
+		"version": "dot-json dist/manifest.json version $VER",
 		"watch": "webpack --mode=development --watch"
 	},
 	"xo": {
@@ -21,7 +21,7 @@
 			"browser"
 		],
 		"ignores": [
-			"distribution"
+			"dist"
 		]
 	},
 	"stylelint": {

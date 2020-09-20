@@ -7,11 +7,12 @@ module.exports = {
 	devtool: 'source-map',
 	stats: 'errors-only',
 	entry: {
-		background: './source/background',
-		options: './source/options'
+		background: './src/background',
+		options: './src/options/options',
+		youtube: './src/youtube',
 	},
 	output: {
-		path: path.join(__dirname, 'distribution'),
+		path: path.join(__dirname, 'dist'),
 		filename: '[name].js'
 	},
 	plugins: [
@@ -19,7 +20,7 @@ module.exports = {
 		new CopyWebpackPlugin([
 			{
 				from: '**/*',
-				context: 'source',
+				context: 'src',
 				ignore: ['*.js']
 			},
 			{
