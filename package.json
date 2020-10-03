@@ -11,7 +11,8 @@
 		"release:cws": "webstore upload --source=dist --auto-publish",
 		"test": "run-s lint:* build",
 		"version": "dot-json dist/manifest.json version $VER",
-		"watch": "webpack --mode=development --watch"
+		"watch": "webpack --mode=development --watch",
+		"pkg": "web-ext build --source-dir dist --overwrite-dest"
 	},
 	"xo": {
 		"envs": [
@@ -28,6 +29,7 @@
 		"extends": "stylelint-config-xo"
 	},
 	"dependencies": {
+		"jsonpath": "^1.0.2",
 		"webext-options-sync": "^0.21.2",
 		"webextension-polyfill": "^0.4.0"
 	},
@@ -38,6 +40,7 @@
 		"dot-json": "^1.1.0",
 		"eslint": "^6.1.0",
 		"eslint-config-xo": "^0.26.0",
+		"jest": "^26.4.2",
 		"npm-run-all": "^4.1.5",
 		"size-plugin": "^1.2.0",
 		"stylelint": "^10.1.0",

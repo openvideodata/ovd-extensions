@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unassigned-import
-import './options/storage';
+import './storage';
 import { isDev } from './api.js';
 
 console.log('loaded background.js');

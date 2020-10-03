@@ -10,7 +10,7 @@
 	},
 	"browser_specific_settings": {
 		"gecko": {
-			"id": "admin@openvideodata.org"
+			"id": "ext@openvideodata.org"
 		}
 	},
 	"permissions": [
@@ -20,6 +20,11 @@
 	],
 	"options_ui": {
 		"page": "options/options.html"
+	},
+	"browser_action": {
+		"default_icon": "icons/ovd-32.png",
+		"default_title": "OpenVideoData",
+		"default_popup": "popup/popup.html"
 	},
 	"background": {
 		"scripts": [

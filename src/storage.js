@@ -2,7 +2,8 @@ import OptionsSync from 'webext-options-sync';
 
 export default new OptionsSync({
 	defaults: {
-    uploadKey: '',
+    	uploadKey: '',
+    	enable: true,
 	},
 	migrations: [
 		OptionsSync.migrations.removeUnused

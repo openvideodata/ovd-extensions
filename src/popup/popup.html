@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+	<head>
+		<style>
+			body {
+				font-family: sans-serif;
+				max-width: 800px;
+				padding: 0px 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<b>OpenVideoData</b>
+		<form id="options-form">
+			<p>
+				<input type="checkbox" name="enable"></input>
+				<label for="enable">Enable uploading anonymous video metadata</label>
+			</p>
+			<p>
+				<label for="uploadKey">Upload Key:</label>
+				<input type="text" name="uploadKey">
+				<button id="verify">verify</button>
+				<span id="verifyResult"></span>
+			</p>
+		</form>
+		<div style="text-align: center;">
+			<p>You've donated metadata for this many videos:</p>
+			<h2 id="donated">...</h2>
+			<p>Thanks!</p>
+		</div>
+		<script src="/popup.js"></script>
+	</body>
+</html>

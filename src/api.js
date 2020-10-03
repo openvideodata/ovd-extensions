@@ -1,4 +1,4 @@
-import optionsStorage from './options/storage';
+import optionsStorage from './storage';
 
 function isDev() {
 	return process.env.NODE_ENV === 'development';

@@ -1,3 +1,23 @@
+# OpenVideoData.org web extension
+
+```bash
+$ lsb_release -a
+No LSB modules are available.
+Distributor ID:	Debian
+Description:	Debian GNU/Linux 10 (buster)
+Release:	10
+Codename:	buster
+$ yarn --version
+1.22.4
+$ node --version
+v14.8.0
+$ yarn install
+$ yarn build
+$ yarn pkg
+```
+
+what follows is the original template readme:
+
 # browser-extension-template
 
 [link-webext-polyfill]: https://github.com/mozilla/webextension-polyfill

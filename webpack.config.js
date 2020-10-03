@@ -9,6 +9,7 @@ module.exports = {
 	entry: {
 		background: './src/background',
 		options: './src/options/options',
+		popup: './src/popup/popup',
 		youtube: './src/youtube',
 	},
 	output: {

@@ -1,8 +1,15 @@
+import jp from 'jsonpath';
+
 import { upload } from './api.js';
+import { isEnabled } from './util.js';
 
 log('loaded youtube.js');
 
 (async () => {
+  if (!(await isEnabled())) {
+    log('anonymous data collection disabled, exiting');
+    return;
+  }
 	try {
 		injectXhrProxy();
 		for (;;) {
@@ -11,7 +18,7 @@ log('loaded youtube.js');
       initialData = JSON.parse(JSON.stringify(initialData));
 			if (initialData) {
 				log('initialData:', initialData);
-				extractYoutubeResponse(initialData);
+        extractAllAndUpload(initialData);
 				return;
 			}
 			await sleep(100);
@@ -25,19 +32,16 @@ function injectXhrProxy() {
 	const realOpen = XMLHttpRequest.prototype.open;
 	const fakeOpen = function() {
 		const url = arguments[1];
-		log('fakeopening', url);
+		log('intercepting', url);
 		if (url.startsWith('https://www.youtube.com/watch')) {
 			log('proxying watch xhr', url);
 			this.addEventListener('load', () => {
 				log('loaded watch xhr', url, this.responseText.length);
-				const parsed = JSON.parse(this.responseText);
+				const parsed = JSON.parse(this.responseText)
+          .map(item => item.response)
+          .filter(item => item !== undefined);
 				log('watch xhr:', parsed);
-				parsed.forEach(item => {
-					if (item.response) {
-						log('resp:', item.response);
-						// extractYoutubeResponse(item.response);
-					}
-				});
+        extractAllAndUpload(parsed);
 			});
 		}
 		realOpen.apply(this, arguments);
@@ -48,65 +52,69 @@ function injectXhrProxy() {
 	log('exported');
 }
 
-async function extractYoutubeResponse(resp) {
-  const videoId = resp.currentVideoEndpoint.watchEndpoint.videoId;
-  const vidInfos = [];
-
-  const videoInfoRenderers = resp.contents.twoColumnWatchNextResults.results.results.contents;
-  const currentVideoInfo = extractVideoInfoRenderer(videoId, videoInfoRenderers);
-  log('currentVideoInfo:', currentVideoInfo);
-  vidInfos.push(currentVideoInfo);
-
-  const sidebarContents = resp.contents.twoColumnWatchNextResults.secondaryResults.secondaryResults.results; 
-  log('sidebarContents:', sidebarContents);
-  sidebarContents.forEach(c => {
-    let cvr = null;
-    if (c.compactVideoRenderer) {
-      cvr = c.compactVideoRenderer;
-    } else if (c.compactAutoplayRenderer) {
-      cvr = c.compactAutoplayRenderer.contents[0].compactVideoRenderer;
-    }
-    if (cvr) {
+async function extractAllAndUpload(data) {
+  const extractors = {
+    '$..videoRenderer': extractVideoRenderer,
+    '$..compactVideoRenderer': extractVideoRenderer,
+  };
+  const results = [];
+  for (const [query, extractor] of Object.entries(extractors)) {
+    jp.query(data, query).forEach(item => {
       try {
-        vidInfos.push(extractCompactVideoRenderer(cvr));
-      } catch (e) {
-        log('err:', e);
+        results.push(extractor(item));
+      } catch (err) {
+        log('extraction err:', err);
       }
-    }
-  });
-
-  log('vidInfos:', vidInfos);
-  upload('yt', vidInfos);
+    })
+  }
+  await upload('yt', results);
+  try {
+    let { numUploads } = await browser.storage.local.get('numUploads');
+    await browser.storage.local.set({ numUploads: (numUploads || 0) + results.length });
+  } catch (e) {
+    log('err:', e);
+  }
 }
 
-function extractVideoInfoRenderer(videoId, rens) {
-  const primaryInfo = rens[0].videoPrimaryInfoRenderer;
-  const secondInfo = rens[1].videoSecondaryInfoRenderer;
-  const ownerRen = secondInfo.owner.videoOwnerRenderer;
-  const ownerChannelUrl = ownerRen.title.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url;
+function extractVideoRenderer(vr) {
+  log('extracting from', vr);
+  const videoId = vr.videoId;
+  const title = extractText(vr.title);
+  let channelId = vr.channelId;
+
+  const channelLinks = jp.query(vr, 
+    '$..runs[?(@.navigationEndpoint.commandMetadata.webCommandMetadata.webPageType=="WEB_PAGE_TYPE_CHANNEL")]');
+  // todo: can get different urls?
+  const channelLink = channelLinks[0];
+  const channelUrl = channelLink.navigationEndpoint.browseEndpoint.canonicalBaseUrl;
+  const channelTitle = channelLink.text;
+
+  const viewCount = extractViewCount(vr.viewCountText);
+  const descriptionSnippet = extractText(vr.descriptionSnippet);
   return {
     videoId,
-    title: primaryInfo.title.runs[0].text,
-    channelId: ownerChannelUrl.split('/')[2],
-    channelTitle: ownerRen.title.runs[0].text,
-    viewCount: parseViewCountText(primaryInfo.viewCount.videoViewCountRenderer.viewCount.simpleText),
-    desc: secondInfo.description.runs[0].text,
-    uploadDate: new Date(primaryInfo.dateText.simpleText),
+    title,
+    channelId,
+    channelUrl,
+    channelTitle,
+    viewCount,
+    descriptionSnippet,
   };
 }
 
-function extractCompactVideoRenderer(ren) {
-  return {
-    videoId: ren.videoId,
-    title: ren.title.simpleText,
-    channelId: ren.channelId,
-    channelTitle: ren.longBylineText.runs[0].text,
-    viewCount: parseViewCountText(ren.viewCountText.simpleText),
-  };
+function extractViewCount(s) {
+  return parseInt(extractText(s).split(' ')[0].replace(/,/g, ''));
 }
 
-function parseViewCountText(s) {
-  return parseInt(s.split(' ')[0].replace(/,/g, ''));
+function extractText(item) {
+  if (!item) return null;
+  if (item.simpleText) {
+    return item.simpleText;
+  }
+  if (item.runs) {
+    return item.runs[0].text;
+  }
+  return null;
 }
 
 function log() {
